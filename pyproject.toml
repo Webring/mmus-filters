@@ -1,0 +1,12 @@
+[project]
+name = "FilteResearch"
+version = "0.1.0"
+description = "Пакет для изучения фильтров Калмана и Язвинского"
+readme = "readme.md"
+requires-python = ">=3.13"
+dependencies = [
+    "matplotlib>=3.10.8",
+    "numpy>=2.4.0",
+    "pyqt6>=6.10.1",
+    "sounddevice>=0.5.3",
+]
