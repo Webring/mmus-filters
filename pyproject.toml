@@ -5,8 +5,10 @@ description = "Пакет для изучения фильтров Калман�
 readme = "readme.md"
 requires-python = ">=3.13"
 dependencies = [
+    "httpx>=0.28.1",
     "matplotlib>=3.10.8",
     "numpy>=2.4.0",
     "pyqt6>=6.10.1",
+    "pyserial>=3.5",
     "sounddevice>=0.5.3",
 ]
