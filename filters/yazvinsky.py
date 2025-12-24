@@ -59,7 +59,6 @@ class YazvinskyFilter(FilterBase):
         """Адаптивная оценка ковариации шума процесса"""
         return self._Q
 
-
     def predict(self) -> None:
         """Шаг прогноза"""
         self._x = self._Phi @ self._x
@@ -69,33 +68,30 @@ class YazvinskyFilter(FilterBase):
         )
 
     def update(self, z: ArrayLike) -> None:
-        """Шаг коррекции + адаптация Q"""
+        """Шаг коррекции + адаптация Q (Язвицкий)"""
         z = self._to_vector(z)
 
         # ===== Инновация =====
         v = z - self._H @ self._x
 
-        # ===== Адаптивная оценка Q (Язвицкий) =====
+        # ===== Адаптивная оценка Q =====
         HG = self._H @ self._Gamma
-        denom = HG.T @ HG
 
-        if np.linalg.matrix_rank(denom) == denom.shape[0]:
-            Q_hat = (
-                    np.linalg.inv(denom)
-                    @ (
-                            HG.T
-                            @ (
-                                    v @ v.T
-                                    - self._H @ self._Phi @ self._P @ self._Phi.T @ self._H.T
-                                    - self._R
-                            )
-                            @ HG
-                    )
-                    @ np.linalg.inv(denom)
-            )
+        denom = HG.T @ HG  # (q×q)
+        denom_sq = denom @ denom  # [(HG)^T HG]^2
 
-            # Условие положительной полуопределённости
-            self._Q = np.maximum(Q_hat, 0.0)
+        # проверяем обратимость
+        if np.linalg.matrix_rank(denom_sq) == denom_sq.shape[0]:
+            num = HG.T @ (
+                    v @ v.T
+                    - self._H @ self._Phi @ self._P @ self._Phi.T @ self._H.T
+                    - self._R
+            ) @ HG
+
+            Q_hat = np.linalg.inv(denom_sq) @ num
+
+            # Условие (14): только положительные значения
+            self._Q = np.where(Q_hat > 0.0, Q_hat, 0.0)
 
         # ===== Калмановский коэффициент =====
         S = self._H @ self._P @ self._H.T + self._R

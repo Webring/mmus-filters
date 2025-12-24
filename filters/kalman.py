@@ -1,4 +1,4 @@
-from typing import Union, Iterable
+from typing import Iterable
 import numpy as np
 
 from filters.base import FilterBase, ArrayLike

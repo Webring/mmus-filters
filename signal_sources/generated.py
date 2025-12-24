@@ -11,8 +11,9 @@ class GeneratedSource(SignalSource):
             func: Callable[[datetime], float],
             interval: float = 0.05,
             livetime: timedelta = timedelta(seconds=5),
+            title: str = "Generated Signal",
     ):
-        super().__init__(livetime=livetime, title="GeneratedFunc")
+        super().__init__(livetime=livetime, title=title)
 
         self.interval = interval
         self.func = func
