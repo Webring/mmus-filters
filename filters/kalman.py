@@ -94,6 +94,11 @@ class KalmanFilter(FilterBase):
         self._x = self._x + K @ y
         self._P = (np.eye(self._P.shape[0]) - K @ self._H) @ self._P
 
+    def one_step(self, x: ArrayLike) -> ArrayLike:
+        self.predict()
+        self.update(x)
+        return self.state
+
     def filter(self, measurements: Iterable[ArrayLike]) -> np.ndarray:
         """
         Прогоняет фильтр по последовательности измерений.

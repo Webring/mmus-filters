@@ -27,29 +27,35 @@ class SerialSource(SignalSource):
         self._thread: threading.Thread | None = None
 
     def _read_loop(self):
-        """Фоновое чтение из COM-порта"""
+        buffer = ""
+
         while self._running:
             try:
-                ts = datetime.now()
-                line = self.ser.readline().decode("utf-8").strip()
-
-                if not line:
+                chunk = self.ser.read(64).decode("utf-8", errors="ignore")
+                if not chunk:
                     continue
 
-                try:
-                    value = self.data_extractor(line)
-                except Exception as e:
-                    value = None
-                    print(f"Serial extraction error: '{e}' on line '{line}'")
+                buffer += chunk
 
-                if not value:
-                    print(f"Serial message: {line}")
-                    continue
+                while "\n" in buffer:
+                    line, buffer = buffer.split("\n", 1)
+                    line = line.rstrip("\r")
 
-                self._append(value, ts)
+                    if not line:
+                        continue
+
+                    try:
+                        value = self.data_extractor(line)
+                    except Exception as e:
+                        print(f"Serial extraction error: '{e}' on line '{line}'")
+                        continue
+
+                    self._append(value, datetime.now())
 
             except serial.SerialException:
                 break
+            except Exception:
+                continue
 
     def start(self):
         if self._running:

@@ -12,9 +12,10 @@ class MicrophoneSource(SignalSource):
         samplerate=44100,
         blocksize=1024,
         gain=1.0,
-        livetime: timedelta = timedelta(seconds=5),
+        livetime: timedelta = timedelta(seconds=5)
     ):
-        super().__init__(livetime=livetime)
+        device_name = sd.query_devices(device)["name"]
+        super().__init__(livetime=livetime, title=device_name)
 
         self.device = device
         self.samplerate = samplerate

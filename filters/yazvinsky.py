@@ -22,10 +22,10 @@ class YazvinskyFilter(FilterBase):
             self,
             Phi: ArrayLike,
             H: ArrayLike,
-            R: ArrayLike,
             Gamma: ArrayLike,
-            x0: ArrayLike,
-            P0: ArrayLike,
+            R: ArrayLike,
+            x0: ArrayLike = 0,
+            P0: ArrayLike = 1,
     ) -> None:
         self._Phi = self._to_matrix(Phi)
         self._H = self._to_matrix(H)
@@ -58,7 +58,6 @@ class YazvinskyFilter(FilterBase):
     def Q(self) -> np.ndarray:
         """Адаптивная оценка ковариации шума процесса"""
         return self._Q
-
 
 
     def predict(self) -> None:
@@ -106,9 +105,11 @@ class YazvinskyFilter(FilterBase):
         self._x = self._x + K @ v
         self._P = (self._I - K @ self._H) @ self._P
 
-    # =========================
-    # Batch-фильтрация
-    # =========================
+
+    def one_step(self, x: ArrayLike) -> ArrayLike:
+        self.predict()
+        self.update(x)
+        return self.state
 
     def filter(self, measurements: Iterable[ArrayLike]) -> np.ndarray:
         """

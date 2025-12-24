@@ -19,6 +19,103 @@ uv run .\kalman-params-main.py
 ```
 
 
+
+## Примеры работы с разными источниками
+Программа поддерживает множество источников сигнала
+### Генератор сигнала
+Пример отображения синусоиды каждые 5 сек
+```python
+from signal_sources.generated import GeneratedSource
+
+def sin_by_time(dt: datetime):
+    import numpy as np
+
+    ms = dt.second * 1000 + dt.microsecond / 1000
+
+    phase_ms = ms % 5_000
+
+    value = np.sin(2 * np.pi * phase_ms / 5_000)
+
+    return value
+
+
+generator_source = GeneratedSource(
+    sin_by_time,
+    interval=0.01,
+    livetime=global_livetime
+)
+
+sources.append(generator_source)
+```
+
+### COM-порт
+Пример получения данных с esp8266
+```python
+from signal_sources.com_port import SerialSource
+
+def parse_a0(line: str):
+    if not line.startswith("!"):
+        return None
+
+    return float(line.strip("!").split(";")[-1])
+
+
+serial_source = SerialSource(
+    "COM6",
+    parse_a0,
+    interval=0.001,
+    livetime=global_livetime
+)
+
+sources.append(serial_source)
+```
+### Микрофон
+Пример получения данных с микрофона и их фильтрация
+```python
+import sounddevice
+from signal_sources.microphone import MicrophoneSource
+from filters.kalman import KalmanFilter
+from filters.yazvinsky import YazvinskyFilter
+
+
+class MicFilteredSource(MicrophoneSource):
+    def __init__(self, *args, **kwargs):
+        super(MicFilteredSource, self).__init__(*args, **kwargs)
+
+        self.title = f"Фильтрированный {self.title}"
+
+        self.filter = KalmanFilter(
+            1, 0.5,
+            0.005, 2,
+        )
+
+        self.filter = YazvinskyFilter(
+            1, 1,
+            0.2,0.001,
+        )
+
+    def _append(self, value: float, ts: datetime = None):
+        fvalue = self.filter.one_step(value)
+        super(MicFilteredSource, self)._append(fvalue, ts)
+
+
+print(sounddevice.query_devices())
+
+mic_source = MicrophoneSource(
+    device=1,
+    livetime=global_livetime,
+)
+
+fmic_source = MicFilteredSource(
+    device=1,
+    livetime=global_livetime
+)
+
+sources.append(mic_source)
+sources.append(fmic_source)
+```
+
+
 ## Примеры с формулами
 ```python
 # Одномерный фильтр Калмана

@@ -7,6 +7,8 @@ ArrayLike = Union[float, int, np.ndarray]
 
 
 class FilterBase(ABC):
+    def one_step(self, x: ArrayLike) -> ArrayLike:
+        ...
 
     def filter(self, measurements: Iterable[ArrayLike]) -> np.ndarray:
         ...
